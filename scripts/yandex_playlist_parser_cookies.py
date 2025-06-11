@@ -1,4 +1,5 @@
-"""Parse Yandex Music playlist using saved cookies."""
+#!/usr/bin/env python3
+"""Parse a Yandex Music playlist using saved cookies."""
 
 from playwright.sync_api import sync_playwright
 import os
@@ -39,30 +40,36 @@ def scroll_to_bottom(page, step=1000):
         previous_height = current_height
 
 
-with sync_playwright() as p:
-    browser = p.chromium.launch(headless=False)
-    context = browser.new_context()
-    cookies = parse_netscape_cookies(cookies_file)
-    context.add_cookies(cookies)
-    page = context.new_page()
-    page.goto(url, timeout=60000)
+def main() -> None:
+    """Launch browser, load playlist, and save track titles."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=False)
+        context = browser.new_context()
+        cookies = parse_netscape_cookies(cookies_file)
+        context.add_cookies(cookies)
+        page = context.new_page()
+        page.goto(url, timeout=60000)
 
-    # Ensure all tracks are loaded
-    scroll_to_bottom(page)
+        # Ensure all tracks are loaded
+        scroll_to_bottom(page)
 
-    # Extract only track entries
-    track_labels = page.eval_on_selector_all(
-        '[aria-label^="Track "], [aria-label^="\u0422\u0440\u0435\u043a "]',
-        "els => els.map(e => e.getAttribute('aria-label').replace(/^(Track|\\u0422\\u0440\\u0435\\u043a)\\s*/, ''))"
-    )
-    track_labels = list(dict.fromkeys(track_labels))
+        # Extract only track entries
+        track_labels = page.eval_on_selector_all(
+            '[aria-label^="Track "], [aria-label^="\u0422\u0440\u0435\u043a "]',
+            "els => els.map(e => e.getAttribute('aria-label').replace(/^(Track|\\u0422\\u0440\\u0435\\u043a)\\s*/, ''))"
+        )
+        track_labels = list(dict.fromkeys(track_labels))
 
-    os.makedirs("playlists", exist_ok=True)
-    with open(f"playlists/{output_file}", "w") as f:
-        for track in track_labels:
-            if track:
-                f.write(track.strip() + "\n")
+        os.makedirs('playlists', exist_ok=True)
+        with open(f'playlists/{output_file}', 'w') as f:
+            for track in track_labels:
+                if track:
+                    f.write(track.strip() + '\n')
 
-    print(f"Saved {len(track_labels)} tracks to playlists/{output_file}")
+        print(f'Saved {len(track_labels)} tracks to playlists/{output_file}')
 
-    browser.close()
+        browser.close()
+
+
+if __name__ == '__main__':
+    main()
