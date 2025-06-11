@@ -34,6 +34,19 @@ with sync_playwright() as p:
     page.goto(url, timeout=60000)
     page.wait_for_selector('[aria-label]', timeout=30000)
 
+    # Scroll until the page no longer loads new tracks
+    last_height = 0
+    last_count = 0
+    while True:
+        page.evaluate('window.scrollTo(0, document.body.scrollHeight)')
+        page.wait_for_timeout(1000)
+        current_height = page.evaluate('document.body.scrollHeight')
+        current_count = len(page.query_selector_all('[aria-label]'))
+        if current_height == last_height and current_count == last_count:
+            break
+        last_height = current_height
+        last_count = current_count
+
     track_labels = page.eval_on_selector_all(
         '[aria-label]',
         "elements => elements.map(e => e.getAttribute('aria-label'))"
