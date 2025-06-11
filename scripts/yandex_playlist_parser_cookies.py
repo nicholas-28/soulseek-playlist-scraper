@@ -49,6 +49,10 @@ def main() -> None:
         context.add_cookies(cookies)
         page = context.new_page()
         page.goto(url, timeout=60000)
+        page.wait_for_selector(
+            '[aria-label^="Track "], [aria-label^="\u0422\u0440\u0435\u043a "]',
+            timeout=30000,
+        )
 
         # Ensure all tracks are loaded
         scroll_to_bottom(page)
@@ -68,6 +72,7 @@ def main() -> None:
 
         print(f'Saved {len(track_labels)} tracks to playlists/{output_file}')
 
+        context.close()
         browser.close()
 
 
